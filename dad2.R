@@ -94,18 +94,79 @@ head(hdi_calc)
 bad_inds <- which(abs(hdi_calc - hdi$hdi2014) > 1e-3)
 ncountries <- dim(hdi_aug)[1]
 rawmat <- cbind(log(health_index), log(education_index), log(income_index))
-# compute all pairwise fuzzy probs
-nset <- 10
-fprobs <- matrix(0,nset,nset)
+
+                                        # compute all pairwise fuzzy probs
+nset <- ncountries
+fprobs <- matrix(0, nset, nset)
+hdidiff <- matrix(0, nset, nset)
 for (ii in 1:nset) {
     for (jj in 1:nset) {
         v1 <- rawmat[ii, ]
         v2 <- rawmat[jj, ]
         fprobs[ii,jj] = domprob(v1,v2)
+        hdidiff[ii,jj] = hdi$hdi2014[ii] - hdi$hdi2014[jj]
     }
 }
 names(hdi)
 cnames <- paste(hdi$rank, hdi$country, sep=". ")
 rownames(fprobs) <- cnames[1:nset]
 colnames(fprobs) <- cnames[1:nset]
-write.csv(fprobs, "top10__hdi.csv")
+#write.csv(fprobs, "top10__hdi.csv")
+
+pdf("HDI_plot.pdf")
+plot(as.vector(hdidiff),as.vector(fprobs),pch="o",main="Fuzzy dominance vs. difference in HDI",
+     col=rgb(0.5,0.5,0.5),cex=.5,xlab="Difference in HDI", ylab="Fuzzy dominance")
+points(as.vector(hdidiff),as.vector(fprobs),pch="o",col=rgb(0,0,0,0.05),cex=.5)
+dev.off()
+
+plot(as.vector(hdidiff[1:50,1:50]),as.vector(fprobs[1:50,1:50]),pch="o",main="Top 50 pairwise dominance",col=rgb(0,0,0,0.5))
+
+list.files()
+epi <- read.csv("2014_epi_framework_indicator_scores_friendly.csv",sep=",")
+options(width=160)
+head(epi)
+
+newnames <- c('Rank','Country','EPI','Ten.Yr.Change','Environmental.Health','Ecosystem.Vitality','EH.Health.Impacts','EH.Air.Quality','EH.Water.Sanitation','EV.Water.Resources','EV.Agriculture','EV.Forests','EV.Fisheries','EV.Biodiversity.Habitat','EV.Climate.Energy','Child.Mortality','Household.Air.Quality','Air.Exposure.PM2.5','Air.PM2.5.Exceedance','Access.to.Sanitation','Access.to.Drinking.Water','Wastewater.Treatment','Agricultural.Subsidies','Pesticide.Regulation','Change.Forest.Cover','Fish.Stocks','Fishing.Pressure','TPA.National.Biome','TPA.Global.Biome','Marine.Protected.Areas','Critical.Habitat.Protection','Trend.Carbon','Change.Trend.Carbon','Trend.CO2.Emissions','Access.to.Electricity')
+cbind(names(epi),newnames)
+oldnames <- names(epi)
+names(epi) <- newnames
+
+head(epi)
+
+names(epi)
+
+prox.epi <- (epi$Environmental.Health * .4 + epi$Ecosystem.Vitality * .6)
+plot(epi$EPI, prox.epi)
+prox.eh <- (epi$EH.Health.Impacts + epi$EH.Air.Quality + epi$EH.Water.Sanitation)/3
+#cbind(epi$Environmental.Health, prox.eh)
+nepi <- epi; nepi[is.na(epi)] <- 0
+prox.ev <- .25 * epi$EV.Water.Resources + 0.05 * epi$EV.Agriculture + .1 * epi$EV.Forests + .1 * epi$EV.Fisheries + .25 * epi$EV.Biodiversity.Habitat + .25*epi$EV.Climate.Energy
+wtot <- 1-(.25 * is.na(epi$EV.Water.Resources) + 0.05 * is.na(epi$EV.Agriculture) + .1 * is.na(epi$EV.Forests) + .1 * is.na(epi$EV.Fisheries) + .25 * is.na(epi$EV.Biodiversity.Habitat) + .25*is.na(epi$EV.Climate.Energy))
+prox.ev <- (.25 * nepi$EV.Water.Resources + 0.05 * nepi$EV.Agriculture + .1 * nepi$EV.Forests + .1 * nepi$EV.Fisheries + .25 * nepi$EV.Biodiversity.Habitat + .25*nepi$EV.Climate.Energy)/wtot
+
+
+# weight-adjusted epi components
+
+wadj <- cbind(.1333*epi$EH.Health.Impacts, .1333*epi$EH.Air.Quality, .1333*epi$EH.Water.Sanitation,
+    .15*nepi$EV.Water.Resources/wtot, .03 * nepi$EV.Agriculture/wtot, .06 * nepi$EV.Forests / wtot, .06 * nepi$EV.Fisheries / wtot,
+    .15 * nepi$EV.Biodiversity.Habitat / wtot, .15 * nepi$EV.Climate.Energy / wtot)
+prox.epi <- apply(wadj,1,sum)
+cbind(epi$EPI, prox.epi)
+
+
+                                        # compute all pairwise EPI
+nset <- 10
+fprobs <- matrix(0, nset, nset)
+epidiff <- matrix(0, nset, nset)
+for (ii in 1:nset) {
+    for (jj in 1:nset) {
+        v1 <- wadj[ii, ]
+        v2 <- wadj[jj, ]
+        fprobs[ii,jj] = domprob(v1,v2)
+        epidiff[ii,jj] = epi$EPI[ii] - epi$EPI[jj]
+    }
+}
+cnames <- paste(epi$Rank, epi$Country, sep=". ")
+rownames(fprobs) <- cnames[1:nset]
+colnames(fprobs) <- cnames[1:nset]
+write.csv(fprobs, "top10_epi.csv")
