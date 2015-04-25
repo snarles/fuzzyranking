@@ -114,9 +114,14 @@ colnames(fprobs) <- cnames[1:nset]
 #write.csv(fprobs, "top10__hdi.csv")
 
 pdf("HDI_plot.pdf")
-plot(as.vector(hdidiff),as.vector(fprobs),pch="o",main="Fuzzy dominance vs. difference in HDI",
-     col=rgb(0.5,0.5,0.5),cex=.5,xlab="Difference in HDI", ylab="Fuzzy dominance")
-points(as.vector(hdidiff),as.vector(fprobs),pch="o",col=rgb(0,0,0,0.05),cex=.5)
+xx <- as.vector(hdidiff)
+yy <- as.vector(fprobs)
+filt <- xx > 0
+xx <- xx[filt]
+yy <- yy[filt]
+plot(xx,yy,pch="o",main="Truth value vs. difference in HDI",
+     col=rgb(0.5,0.5,0.5),cex=.5,xlab="Difference in HDI", ylab="Truth Value")
+points(xx,yy,pch="o",col=rgb(0,0,0,0.05),cex=.5)
 dev.off()
 
 plot(as.vector(hdidiff[1:50,1:50]),as.vector(fprobs[1:50,1:50]),pch="o",main="Top 50 pairwise dominance",col=rgb(0,0,0,0.5))
