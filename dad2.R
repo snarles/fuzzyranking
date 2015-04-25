@@ -119,7 +119,7 @@ yy <- as.vector(fprobs)
 filt <- xx > 0
 xx <- xx[filt]
 yy <- yy[filt]
-plot(xx,yy,pch="o",main="Truth value vs. difference in HDI",
+plot(xx,yy,pch="o",
      col=rgb(0.5,0.5,0.5),cex=.5,xlab="Difference in HDI", ylab="Truth Value")
 points(xx,yy,pch="o",col=rgb(0,0,0,0.05),cex=.5)
 dev.off()
