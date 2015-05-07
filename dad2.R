@@ -160,7 +160,7 @@ cbind(epi$EPI, prox.epi)
 
 
                                         # compute all pairwise EPI
-nset <- 10
+nset <- 178
 fprobs <- matrix(0, nset, nset)
 epidiff <- matrix(0, nset, nset)
 for (ii in 1:nset) {
@@ -175,3 +175,22 @@ cnames <- paste(epi$Rank, epi$Country, sep=". ")
 rownames(fprobs) <- cnames[1:nset]
 colnames(fprobs) <- cnames[1:nset]
 write.csv(fprobs, "top10_epi.csv")
+
+col(fprobs)[fprobs == 64] # 120
+row(fprobs)[fprobs == 64] # 107
+
+wadj[107, ]
+wadj[120, ]
+
+sum(fprobs < 0)
+
+fprobs[fprobs > 1] <- 1
+fprobs[fprobs < 0] <- 0
+
+png("EPI_plot.png")
+xx <- epidiff[epidiff > 0]
+yy <- fprobs[epidiff > 0]
+plot(xx,yy,pch="o",
+     col=rgb(0.5,0.5,0.5),cex=.5,xlab="Difference in EPI", ylab="Truth Value")
+points(xx,yy,pch="o",col=rgb(0,0,0,0.05),cex=.5)
+dev.off()
